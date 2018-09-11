@@ -2,6 +2,7 @@
 import distutils.util
 import os
 import re
+import subprocess
 from ast import literal_eval
 from setuptools import setup
 from setuptools_rust import Binding, RustExtension
@@ -25,13 +26,21 @@ def strtobool(string):
     return bool(distutils.util.strtobool(string))
 
 
+def git_rev_count(revision):
+    return subprocess.check_output(["git",
+                                    "rev-list",
+                                    "--count",
+                                    revision]).decode("utf-8").strip()
+
+
 def expand_version(version):
-    env = os.environ.copy()
+    env = os.environ
     is_ci = strtobool(env.get("CI", "f"))
     branch = env.get("APPVEYOR_REPO_BRANCH") or env.get("TRAVIS_BRANCH")
-    commit = env.get("APPVEYOR_REPO_COMMIT") or env.get("TRAVIS_COMMIT")
-    if is_ci and branch == "master":
-        return "{}-beta.{}".format(version, commit)
+    if is_ci and branch == "ms/develop":
+        commit = env.get("APPVEYOR_REPO_COMMIT") or env.get("TRAVIS_COMMIT")
+        rev_count = git_rev_count(commit)
+        return "{}.dev{}".format(version, rev_count)
     return version
 
 
