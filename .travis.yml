@@ -36,7 +36,10 @@ script:
   - export CIBW_ENVIRONMENT='PATH="$HOME/rust/bin:$PATH"'
   - cibuildwheel --output-dir wheelhouse
   - |
-    if [[ $TRAVIS_TAG ]]; then
+    if [[ ! -z "$TRAVIS_TAG" ]]; then
       $PIP install twine
       $PYTHON -m twine upload wheelhouse/*.whl
+    elif [[ $TRAVIS_BRANCH = "master" ]]; then
+      $PIP install twine
+      $PYTHON -m twine upload wheelhouse/*.whl --repository-url https://test.pypi.org/legacy/
     fi

@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import distutils.util
+import os
 import re
 from ast import literal_eval
 from setuptools import setup
@@ -19,12 +21,26 @@ def parse_module_metadata():
         return [grep_attr(body, attr) for attr in ("version", "author")]
 
 
+def strtobool(string):
+    return bool(distutils.util.strtobool(string))
+
+
+def expand_version(version):
+    env = os.environ.copy()
+    is_ci = strtobool(env.get("CI", "f"))
+    branch = env.get("APPVEYOR_REPO_BRANCH") or env.get("TRAVIS_BRANCH")
+    commit = env.get("APPVEYOR_REPO_COMMIT") or env.get("TRAVIS_COMMIT")
+    if is_ci and branch == "master":
+        return "{}-beta.{}".format(version, commit)
+    return version
+
+
 def main():
     version, author = parse_module_metadata()
     description = "A simple, cross-platform GUI automation library for Python."
     setup(
         name='autopy',
-        version=version,
+        version=expand_version(version),
         author=author,
         author_email='michael.sanders@fastmail.com',
         description=description,
